@@ -60,10 +60,10 @@ python excelpic.py excel_filename image_filename [options]
 
 ## Command Line Arguments
 
-excel_filename: The path to the Excel file you want to process.
-image_filename: The name and path for the output image file.
--p, --page: Optional. Specify the Excel sheet by name. If not provided, the first sheet is used.
--r, --range: Optional. Specify the Excel range in A1 notation. If not provided, the entire used range is selected.
+- excel_filename: The path to the Excel file you want to process.
+- image_filename: The name and path for the output image file.
+- -p, --page: Optional. Specify the Excel sheet by name. If not provided, the first sheet is used.
+- -r, --range: Optional. Specify the Excel range in A1 notation. If not provided, the entire used range is selected.
 
 ## Examples:
 Convert the entire first sheet to an image:
