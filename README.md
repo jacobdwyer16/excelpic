@@ -11,7 +11,7 @@ Welcome to `ExcelPic`! This tool simplifies the process of converting parts of E
 - **Supports single Workbook connection**: To make the best use of I/O resources, a single workbook connection can be passed in and maintained, *or* a string path can be passed in and `ExcelPic` will take care of resource management.
 
 ## Prerequisites:
-- Python 3.8 or greater
+- Python 3.8 or greater (although it's probably fine to use older versions...)
 - Windows OS (due to reliance on COM API)
 - win32com.client, imgkit libraries installed
 - wkhtmltoimg installed and on path for imgkit.
