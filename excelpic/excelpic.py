@@ -1,9 +1,9 @@
-import uuid
-import hashlib
 import argparse
+import hashlib
 import logging
 import os
 import re
+import uuid
 from typing import Any, Dict, Optional, Union
 
 import imgkit
@@ -80,7 +80,8 @@ def extract_charset(html_path: str) -> str:
     else:
         return "utf-8"  # Default to utf-8 if no charset is declared
 
-def generate_hashed_filename(extension:str, modifier: Optional[str] = None) -> str:
+
+def generate_hashed_filename(extension: str, modifier: Optional[str] = None) -> str:
     """
     Generatese a UUID SHA256 hash string to use for the table.
 
@@ -93,11 +94,16 @@ def generate_hashed_filename(extension:str, modifier: Optional[str] = None) -> s
         str: The file name to use when writing the intermediary HTML file
     """
     unique_id = uuid.uuid4()
-    unique_id_bytes = str(unique_id).encode('utf-8')
+    unique_id_bytes = str(unique_id).encode("utf-8")
     hash_object = hashlib.sha256(unique_id_bytes)
     hashed_id = hash_object.hexdigest()
-    val: str = f"{hashed_id}.{extension}" if modifier is None else f"{hashed_id}{modifier}.{extension}"
+    val: str = (
+        f"{hashed_id}.{extension}"
+        if modifier is None
+        else f"{hashed_id}{modifier}.{extension}"
+    )
     return val
+
 
 def clean_html(file_path: str, charset: str) -> None:
     """
@@ -346,7 +352,7 @@ def _export_range_to_image(
             clean_html(temp_html_path, charset)
             css_to_remove_borders(temp_html_path, charset)
 
-            _imgkit_screenshot(temp_html_path, fn_image, options= imgkit_params)
+            _imgkit_screenshot(temp_html_path, fn_image, options=imgkit_params)
 
             try:
                 os.remove(temp_html_path)
