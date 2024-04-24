@@ -48,9 +48,10 @@ excel_path = 'path.xlsx'
 output_image = 'output_specific.png'
 sheet_name = 'Sheet1'
 range_spec = 'B2:F20'
+imgkit_params = {"format": "png", "quality": 100, "zoom": 4}
 
 # Perform the conversion with specific sheet and range
-excelpic(excel_path, output_image, page = sheet_name, _range = range_spec)
+excelpic(excel_path, output_image, page = sheet_name, _range = range_spec, imgkit_params = imgkit_params)
 ```
 3. Passing in an existing workbook connection and keeping the connection open.
 ```python
