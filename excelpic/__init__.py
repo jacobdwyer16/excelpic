@@ -1,1 +1,1 @@
-from .excel2img import excelpic
+from .excelpic import excelpic
