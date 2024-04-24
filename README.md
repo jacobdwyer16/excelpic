@@ -52,6 +52,20 @@ range_spec = 'B2:F20'
 # Perform the conversion with specific sheet and range
 excelpic(excel_path, output_image, page = sheet_name, _range = range_spec)
 ```
+3. Passing in an existing workbook connection and keeping the connection open.
+```python
+xlApp = win32.Dispatch("Excel.Application")
+wb = xlApp.Workbooks.Open("workbook.xlsx")
+
+# The existing workbook connection can be used
+excelpic(wb, "image_location.png")
+
+# The existing workbook connection is still active
+wb.save()
+wb.close()
+
+xlApp.Quit()
+```
 
 ### Command Line:
 ```bash
