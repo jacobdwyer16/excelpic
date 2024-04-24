@@ -1,3 +1,5 @@
+import uuid
+import hashlib
 import argparse
 import logging
 import os
@@ -78,6 +80,24 @@ def extract_charset(html_path: str) -> str:
     else:
         return "utf-8"  # Default to utf-8 if no charset is declared
 
+def generate_hashed_filename(extension:str, modifier: Optional[str] = None) -> str:
+    """
+    Generatese a UUID SHA256 hash string to use for the table.
+
+    Minimizes the odds of collision if excelpic is running in multiple instances on a shared env.
+
+    Args:
+        extension (str): Image file type (PNG, JPEG, SVG, etc.)
+
+    Returns:
+        str: The file name to use when writing the intermediary HTML file
+    """
+    unique_id = uuid.uuid4()
+    unique_id_bytes = str(unique_id).encode('utf-8')
+    hash_object = hashlib.sha256(unique_id_bytes)
+    hashed_id = hash_object.hexdigest()
+    val: str = f"{hashed_id}.{extension}" if modifier is None else f"{hashed_id}{modifier}.{extension}"
+    return val
 
 def clean_html(file_path: str, charset: str) -> None:
     """
@@ -248,6 +268,7 @@ def _is_gen_py_object(obj: Any) -> bool:
 def _range_and_print(
     excel: ExcelWorkbook,
     fn_image: str,
+    imgkit_params: Optional[Dict[str, Union[str, int, float]]],
     page: Optional[int] = None,
     _range: Optional[str] = None,
 ) -> None:
@@ -270,7 +291,7 @@ def _range_and_print(
             else:
                 rng = excel.workbook.Sheets(page).UsedRange
 
-        if _export_range_to_image(rng, excel, fn_image):
+        if _export_range_to_image(rng, excel, fn_image, imgkit_params):
             logger.info("Successfully generated picture ")
         else:
             logger.error("Unable to generate picture successfully.")
@@ -284,8 +305,8 @@ def _export_range_to_image(
     rng: win32com.client.CDispatch,
     excel: ExcelWorkbook,
     fn_image: str,
+    imgkit_params: Optional[Dict[str, Union[str, int, float]]],
     temp_folder: str = "temporary_files",
-    temp_file_name: str = "table",
 ) -> bool:
     """
     Exports a specified range from an Excel sheet to an image file using HTML as an intermediate format.
@@ -304,7 +325,8 @@ def _export_range_to_image(
         lib_dir = os.path.dirname(os.path.abspath(__file__))
 
         temp_cache = os.path.join(lib_dir, temp_folder)
-        temp_html_path = os.path.join(temp_cache, f"{temp_file_name}.html")
+        unique_file_name = generate_hashed_filename("html")
+        temp_html_path = os.path.join(temp_cache, unique_file_name)
 
         if not os.path.exists(temp_cache):
             os.makedirs(temp_cache)
@@ -324,7 +346,7 @@ def _export_range_to_image(
             clean_html(temp_html_path, charset)
             css_to_remove_borders(temp_html_path, charset)
 
-            _imgkit_screenshot(temp_html_path, fn_image)
+            _imgkit_screenshot(temp_html_path, fn_image, options= imgkit_params)
 
             try:
                 os.remove(temp_html_path)
@@ -347,8 +369,8 @@ def _export_range_to_image(
 def _imgkit_screenshot(
     html_path: str,
     fn_image: str,
-    wkhtmltoimage_path: str | None = None,
-    options: Dict[str, Union[str, int, float]] | None = None,
+    options: Optional[Dict[str, Union[str, int, float]]],
+    wkhtmltoimage_path: Optional[str] = None,
 ) -> bool:
     """
     Converts HTML file to an image using the wkhtmltoimage tool.
@@ -380,6 +402,7 @@ def excelpic(
     fn_image: str,
     page: Optional[int] = None,
     _range: Optional[str] = None,
+    imgkit_params: Optional[Dict[str, Union[str, int, float]]] = None,
 ) -> None:
     """
     Main function to handle exporting specified parts of an Excel file as images.
@@ -392,10 +415,12 @@ def excelpic(
     """
     if isinstance(fn_excel, str):
         with ExcelWorkbook.open(fn_excel) as excel:
-            _range_and_print(excel, fn_image, page, _range)
+            # Pass in string name of file into a context manager.
+            # Enter/Exit will be used and file connection will be closed after img generation.
+            _range_and_print(excel, fn_image, imgkit_params, page, _range)
     elif _is_gen_py_object(fn_excel):
         # Directly pass the ExcelFile instance that wraps the win32com.client.CDispatch object
-        _range_and_print(ExcelWorkbook(fn_excel), fn_image, page, _range)
+        _range_and_print(ExcelWorkbook(fn_excel), fn_image, imgkit_params, page, _range)
 
     return
 
