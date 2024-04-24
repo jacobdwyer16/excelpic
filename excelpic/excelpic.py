@@ -89,6 +89,7 @@ def generate_hashed_filename(extension: str, modifier: Optional[str] = None) -> 
 
     Args:
         extension (str): Image file type (PNG, JPEG, SVG, etc.)
+        modifier (str): Optional additional string to add to HTML file name.
 
     Returns:
         str: The file name to use when writing the intermediary HTML file
