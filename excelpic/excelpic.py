@@ -415,9 +415,12 @@ def excelpic(
             # Pass in string name of file into a context manager.
             # Enter/Exit will be used and file connection will be closed after img generation.
             _range_and_print(excel, fn_image, imgkit_params, page, _range)
-    elif _is_gen_py_object(fn_excel):
+    elif _is_gen_py_object(fn_excel) or isinstance(fn_excel, win32com.client.CDispatch):
         # Directly pass the ExcelFile instance that wraps the win32com.client.CDispatch object
         _range_and_print(ExcelWorkbook(fn_excel), fn_image, imgkit_params, page, _range)
+    else:
+        logging.error(f"Type {type(fn_excel)} is not a valid type for the fn_excel parameter.")
+        raise ValueError(f"Type {type(fn_excel)} is not a valid type for the fn_excel parameter.")
 
     return
 
