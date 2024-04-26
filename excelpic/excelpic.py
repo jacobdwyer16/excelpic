@@ -3,6 +3,7 @@ import hashlib
 import logging
 import os
 import re
+import tempfile
 import uuid
 from typing import Any, Dict, Optional, Union
 
@@ -53,32 +54,6 @@ def setup_logging(
     logger.setLevel(level)
     logger.addHandler(handler)
     logger.propagate = propagate
-    return
-
-
-def delete_contents_in_folder(folder_name: str) -> None:
-    """
-    Delete all files in a folder.
-
-    Parameters:
-    - folder_path (str): The path to the folder.
-    """
-    folder_path = os.path.join(os.getcwd(), folder_name)
-
-    if not os.path.exists(folder_path):
-        logging.warning(f"Invalid folder path: {folder_path}")
-        return
-
-    for filename in os.listdir(folder_path):
-        file_path = os.path.join(folder_path, filename)
-        try:
-            if os.path.isfile(file_path) or os.path.islink(file_path):
-                os.unlink(file_path)
-            elif os.path.isdir(file_path):
-                os.rmdir(file_path)
-        except Exception as e:
-            logger.warning(f"Error deleting {file_path}. Leaving in cache. Reason: {e}")
-
     return
 
 
@@ -341,7 +316,6 @@ def _export_range_to_image(
     excel: ExcelWorkbook,
     fn_image: str,
     imgkit_params: Optional[Dict[str, Union[str, int, float]]],
-    temp_folder: str = "temporary_files",
 ) -> bool:
     """
     Exports a specified range from an Excel sheet to an image file using HTML as an intermediate format.
@@ -350,47 +324,33 @@ def _export_range_to_image(
         rng (CDispatch): The COM Dispatch object representing the Excel range.
         excel (ExcelWorkbook): The Excel workbook instance.
         fn_image (str): The path where the output image will be saved.
-        temp_folder (str): The name of the temporary folder to save the HTML to.
-        temp_file_name (str): Base name for temporary HTML file used during conversion.
 
     Returns:
         bool: True if the image was successfully created, False otherwise.
     """
     try:
-        lib_dir = os.path.dirname(os.path.abspath(__file__))
+        with tempfile.TemporaryDirectory() as temp_cache:
+            unique_file_name = generate_hashed_filename("html")
+            temp_html_path = os.path.join(temp_cache, unique_file_name)
 
-        temp_cache = os.path.join(lib_dir, temp_folder)
-        delete_contents_in_folder(temp_cache)
+            if excel.app:
+                pub = excel.app.ActiveWorkbook.PublishObjects.Add(
+                    SourceType=SOURCE_TYPE,
+                    Filename=temp_html_path,
+                    Sheet=rng.Worksheet.Name,
+                    Source=rng.Address,
+                    HtmlType=HTML_TYPE,
+                )
 
-        unique_file_name = generate_hashed_filename("html")
-        temp_html_path = os.path.join(temp_cache, unique_file_name)
+                pub.Publish(True)
 
-        if not os.path.exists(temp_cache):
-            os.makedirs(temp_cache)
+                charset = extract_charset(temp_html_path)
+                clean_html(temp_html_path, charset)
+                css_to_remove_borders(temp_html_path, charset)
 
-        if excel.app:
-            pub = excel.app.ActiveWorkbook.PublishObjects.Add(
-                SourceType=SOURCE_TYPE,
-                Filename=temp_html_path,
-                Sheet=rng.Worksheet.Name,
-                Source=rng.Address,
-                HtmlType=HTML_TYPE,
-            )
+                _imgkit_screenshot(temp_html_path, fn_image, options=imgkit_params)
 
-            pub.Publish(True)
-
-            charset = extract_charset(temp_html_path)
-            clean_html(temp_html_path, charset)
-            css_to_remove_borders(temp_html_path, charset)
-
-            _imgkit_screenshot(temp_html_path, fn_image, options=imgkit_params)
-
-            try:
-                os.remove(temp_html_path)
-            except IOError as e:
-                logging.warning(f"Failed to delete intermediate HTML file: {e}")
-
-            return True
+                return True
 
         return False
 
