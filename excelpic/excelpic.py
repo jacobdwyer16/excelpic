@@ -409,6 +409,7 @@ def excelpic(
         fn_image (str): The filename for the output image.
         page (Optional[int]): Specific sheet to use if not default or inferred.
         _range (Optional[str]): Specific range within the Excel sheet to export.
+        imgkit_params: paramaters to be passed along to imgkit for image generation.
     """
     if isinstance(fn_excel, str):
         with ExcelWorkbook.open(fn_excel) as excel:
