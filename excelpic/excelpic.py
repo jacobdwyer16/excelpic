@@ -19,6 +19,7 @@ LOG_SIZE = 50 * 1024 * 1024
 BACKUP_COUNT = 3
 
 
+# Custom errors
 class ExcelOpenError(Exception):
     """Exception raised for errors that occur during Excel file operations."""
 
@@ -35,6 +36,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
+# Utility functions
 def setup_logging(
     file_path: str = "application.log",
     level: int = logging.INFO,
@@ -51,6 +53,32 @@ def setup_logging(
     logger.setLevel(level)
     logger.addHandler(handler)
     logger.propagate = propagate
+    return
+
+
+def delete_contents_in_folder(folder_name: str) -> None:
+    """
+    Delete all files in a folder.
+
+    Parameters:
+    - folder_path (str): The path to the folder.
+    """
+    folder_path = os.path.join(os.getcwd(), folder_name)
+
+    if not os.path.exists(folder_path):
+        logging.warning(f"Invalid folder path: {folder_path}")
+        return
+
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                os.rmdir(file_path)
+        except Exception as e:
+            logger.warning(f"Error deleting {file_path}. Leaving in cache. Reason: {e}")
+
     return
 
 
@@ -89,7 +117,6 @@ def generate_hashed_filename(extension: str, modifier: Optional[str] = None) -> 
 
     Args:
         extension (str): Image file type (PNG, JPEG, SVG, etc.)
-        modifier (str): Optional additional string to add to HTML file name.
 
     Returns:
         str: The file name to use when writing the intermediary HTML file
@@ -173,6 +200,7 @@ def com_uninitialize() -> None:
     CoUninitialize()
 
 
+# Excelpic functions and classes
 class ExcelWorkbook(object):
     """
     Class that wraps Excel workbook for functions.
@@ -332,6 +360,8 @@ def _export_range_to_image(
         lib_dir = os.path.dirname(os.path.abspath(__file__))
 
         temp_cache = os.path.join(lib_dir, temp_folder)
+        delete_contents_in_folder(temp_cache)
+
         unique_file_name = generate_hashed_filename("html")
         temp_html_path = os.path.join(temp_cache, unique_file_name)
 
