@@ -420,8 +420,12 @@ def excelpic(
         # Directly pass the ExcelFile instance that wraps the win32com.client.CDispatch object
         _range_and_print(ExcelWorkbook(fn_excel), fn_image, imgkit_params, page, _range)
     else:
-        logging.error(f"Type {type(fn_excel)} is not a valid type for the fn_excel parameter.")
-        raise ValueError(f"Type {type(fn_excel)} is not a valid type for the fn_excel parameter.")
+        logging.error(
+            f"Type {type(fn_excel)} is not a valid type for the fn_excel parameter."
+        )
+        raise ValueError(
+            f"Type {type(fn_excel)} is not a valid type for the fn_excel parameter."
+        )
 
     return
 
